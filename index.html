@@ -4,143 +4,338 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Controle Financeiro Pessoal</title>
-  <!-- Fonte & Ícones -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkfA+Rv4qIhP1xQ1BMpL0fN+XK2c8+qD7W4VjHSk2nHtVPUEdXf9QY+3g==" crossorigin="anonymous" referrerpolicy="no-referrer"/>
-  <!-- Chart.js (somente para visual demonstrativa) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    :root{
+      --line:#e5e7eb; --muted:#6b7280; --text:#111827; --bg:#f3f4f6;
+      --green:#16a34a; --red:#ef4444; --pill:#0b0c14; --radius:12px;
+    }
+    body{margin:0;font-family:Inter, system-ui, sans-serif;background:var(--bg);color:var(--text)}
+    .app{max-width:1200px;margin:auto;padding:24px}
+    .title{font-size:28px;font-weight:700;margin:0 0 4px}
+    .subtitle{color:var(--muted);margin:0 0 20px}
 
+    /* Tabs */
+    .tabs{display:flex;gap:10px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px;width:max-content;margin-bottom:20px}
+    .tab-btn{border:0;background:transparent;padding:8px 16px;border-radius:999px;font-weight:600;color:var(--muted);cursor:pointer}
+    .tab-btn.is-active{background:#eef2f7;color:var(--text)}
+
+    /* Cards e grids */
+    .grid-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:16px}
+    .card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}
+    .kpi .value{font-size:22px;font-weight:700;margin:6px 0}
+    .income .value{color:var(--green)} .expense .value{color:var(--red)} .balance .value{color:var(--green)}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:0 0 20px}
+    @media(max-width:992px){.grid-kpi{grid-template-columns:repeat(2,1fr)} .grid-2{grid-template-columns:1fr}}
+
+    /* Lists */
+    .tx-list{list-style:none;padding:0;margin:0}
+    .tx-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 10px;border-top:1px solid var(--line)}
+    .tx-item:first-child{border-top:0}
+    .tx-left{display:flex;align-items:center;gap:10px}
+    .dot{width:10px;height:10px;border-radius:50%;background:#34d399;border:3px solid #d1fae5}
+    .tx-meta{color:var(--muted);font-size:13px}
+    .amount{font-weight:700}
+    .amount.negative{color:var(--red)} .amount.positive{color:var(--green)}
+    .badge{font-size:11px;padding:4px 8px;border-radius:999px;background:#111827;color:#fff}
+    .btn-icon{border:1px solid var(--line);background:#fff;border-radius:10px;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+
+    /* Form Adicionar */
+    .form-card{max-width:520px;margin:18px auto}
+    .form-row{margin-bottom:12px}
+    .label{display:block;font-weight:600;margin:0 0 6px}
+    .input,.select,.textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#f9fafb}
+    .radio-row{display:flex;gap:18px}
+    .btn{background:#0b0c14;color:#fff;padding:12px 16px;border:0;border-radius:12px;font-weight:700;cursor:pointer}
+
+    /* Filtros Transações */
+    .filters{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+    .filters .search{flex:1}
+    .muted{color:var(--muted)}
+
+    /* Orçamento */
+    .budget-form{display:grid;grid-template-columns:1fr 200px 120px;gap:10px;align-items:end;margin-bottom:14px}
+    .progress{height:8px;background:#f3f4f6;border-radius:999px;overflow:hidden}
+    .bar{height:100%;background:#0ea5e9;width:0%}
+  </style>
 </head>
 <body>
   <div class="app">
-    <header class="topbar">
-      <h1 class="title">Controle Financeiro Pessoal</h1>
-      <p class="subtitle">Gerencie suas finanças de forma simples e eficiente</p>
-      <nav class="tabs" role="tablist" aria-label="Navegação">
-        <button class="tab-btn is-active" aria-selected="true"><i class="fa-solid fa-chart-line"></i> Dashboard</button>
-        <button class="tab-btn"><i class="fa-solid fa-plus-circle"></i> Adicionar</button>
-        <button class="tab-btn"><i class="fa-solid fa-list"></i> Transações</button>
-        <button class="tab-btn"><i class="fa-solid fa-gear"></i> Orçamento</button>
-      </nav>
-    </header>
+    <h1 class="title">Controle Financeiro Pessoal</h1>
+    <p class="subtitle">Gerencie suas finanças de forma simples e eficiente</p>
 
-    <!-- KPIs -->
-    <section class="grid-kpi">
-      <article class="card kpi income">
-        <div class="head"><span class="label">Receitas do Mês</span><i class="fa-solid fa-arrow-trend-up" aria-hidden="true"></i></div>
-        <div class="value" id="kpi-income">R$ 0,00</div>
-        <small>Total de receitas em setembro de 2025</small>
-      </article>
+    <nav class="tabs">
+      <button class="tab-btn is-active" data-tab="dashboard">Dashboard</button>
+      <button class="tab-btn" data-tab="add">Adicionar</button>
+      <button class="tab-btn" data-tab="transactions">Transações</button>
+      <button class="tab-btn" data-tab="budget">Orçamento</button>
+    </nav>
 
-      <article class="card kpi expense">
-        <div class="head"><span class="label">Gastos do Mês</span><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i></div>
-        <div class="value" id="kpi-expense">R$ 0,00</div>
-        <small>Total de gastos em setembro de 2025</small>
-      </article>
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="tab-content">
+      <div class="grid-kpi">
+        <div class="card kpi income"><div>Receitas do Mês</div><div class="value" id="kpi-income">R$ 0,00</div><small class="muted" id="inc-sub"></small></div>
+        <div class="card kpi expense"><div>Gastos do Mês</div><div class="value" id="kpi-expense">R$ 0,00</div><small class="muted" id="exp-sub"></small></div>
+        <div class="card kpi balance"><div>Saldo do Mês</div><div class="value" id="kpi-balance">R$ 0,00</div><small class="muted" id="bal-sub">Você está no azul!</small></div>
+        <div class="card"><div>Transações</div><div class="value" id="kpi-count">0</div><small class="muted">Transações registradas este mês</small></div>
+      </div>
 
-      <article class="card kpi balance">
-        <div class="head"><span class="label">Saldo do Mês</span><i class="fa-solid fa-dollar-sign" aria-hidden="true"></i></div>
-        <div class="value" id="kpi-balance">R$ 0,00</div>
-        <small>Você está no azul!</small>
-      </article>
+      <div class="grid-2">
+        <div class="card"><h3>Gastos por Categoria</h3><canvas id="chart-pie" height="220"></canvas><div id="empty-pie" class="muted" style="text-align:center; padding:24px; display:none">Nenhuma despesa registrada neste período</div></div>
+        <div class="card"><h3>Receitas vs Gastos</h3><canvas id="chart-line" height="220"></canvas></div>
+      </div>
 
-      <article class="card kpi">
-        <div class="head"><span class="label">Transações</span><i class="fa-regular fa-bullseye" aria-hidden="true"></i></div>
-        <div class="value" id="kpi-count">0</div>
-        <small>Transações registradas este mês</small>
+      <div class="card">
+        <h3>Transações Recentes</h3>
+        <p class="muted">Últimas 5 transações registradas</p>
+        <ul class="tx-list" id="tx-list"></ul>
+      </div>
+    </section>
+
+    <!-- ADICIONAR -->
+    <section id="add" class="tab-content" hidden>
+      <article class="card form-card">
+        <h3>Nova Transação</h3>
+        <p class="muted">Registre uma nova receita ou despesa</p>
+        <form id="tx-form">
+          <div class="form-row">
+            <span class="label">Tipo de Transação</span>
+            <div class="radio-row">
+              <label><input type="radio" name="tipo" value="despesa" checked> Despesa</label>
+              <label><input type="radio" name="tipo" value="receita"> Receita</label>
+            </div>
+          </div>
+          <div class="form-row">
+            <label class="label">Valor *</label>
+            <input class="input" type="text" name="valor" placeholder="0,00" required>
+          </div>
+          <div class="form-row">
+            <label class="label">Categoria *</label>
+            <select class="select" name="categoria" required>
+              <option value="">Selecione uma categoria</option>
+              <option>Alimentação</option><option>Transporte</option><option>Moradia</option><option>Lazer</option><option>Educação</option><option>Saúde</option><option>Salário</option><option>Investimentos</option><option>Outros</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label class="label">Descrição *</label>
+            <input class="input" type="text" name="descricao" placeholder="Ex: Almoço no restaurante, Salário do mês..." required>
+          </div>
+          <div class="form-row">
+            <label class="label">Data *</label>
+            <input class="input" type="date" name="data" required>
+          </div>
+          <button class="btn" type="submit">Adicionar Transação</button>
+        </form>
       </article>
     </section>
 
-    <!-- Gráficos -->
-    <section class="grid-2">
-      <article class="card panel">
-        <h3>Gastos por Categoria</h3>
-        <p class="desc">Distribuição dos seus gastos do mês atual</p>
-        <canvas id="chart-pie" height="200" aria-label="Gráfico de pizza"></canvas>
-        <div class="empty" id="empty-pie" hidden>Nenhuma despesa registrada neste período</div>
-      </article>
-
-      <article class="card panel">
-        <h3>Receitas vs Gastos</h3>
-        <p class="desc">Comparação mensal dos últimos 6 meses</p>
-        <canvas id="chart-line" height="200" aria-label="Gráfico de linhas"></canvas>
+    <!-- TRANSACOES -->
+    <section id="transactions" class="tab-content" hidden>
+      <article class="card">
+        <h3>Todas as Transações</h3>
+        <p class="muted">Gerencie e visualize todas as suas transações financeiras</p>
+        <div class="filters">
+          <input id="search" class="input search" placeholder="Buscar por descrição..." />
+          <select id="filter-tipo" class="select" style="width:140px"><option value="">Todos</option><option value="receita">Receitas</option><option value="despesa">Despesas</option></select>
+          <select id="filter-cat" class="select" style="width:160px"><option value="">Todas</option><option>Alimentação</option><option>Transporte</option><option>Moradia</option><option>Lazer</option><option>Educação</option><option>Saúde</option><option>Salário</option><option>Investimentos</option><option>Outros</option></select>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span class="muted">Total de transações: <strong id="total-tx">0</strong></span><span>Saldo: <strong id="saldo-geral">R$ 0,00</strong></span></div>
+        <ul class="tx-list" id="tx-list-full"></ul>
       </article>
     </section>
 
-    <!-- Transações Recentes -->
-    <section class="card panel transactions">
-      <h3>Transações Recentes</h3>
-      <p class="desc">Últimas 5 transações registradas</p>
-      <div class="empty" id="empty-list">Nenhuma transação registrada ainda<br><small class="tx-meta">Comece adicionando sua primeira transação!</small></div>
-      <ul class="tx-list" id="tx-list" hidden></ul>
+    <!-- ORCAMENTO -->
+    <section id="budget" class="tab-content" hidden>
+      <article class="card">
+        <h3>Definir Novo Orçamento</h3>
+        <p class="muted">Estabeleça limites mensais para suas categorias de gastos</p>
+        <form id="budget-form" class="budget-form">
+          <select id="budget-cat" class="select" required>
+            <option value="" disabled selected>Selecione uma categoria</option>
+            <option>Alimentação</option><option>Transporte</option><option>Moradia</option><option>Lazer</option><option>Educação</option><option>Saúde</option><option>Outros</option>
+          </select>
+          <input id="budget-limit" class="input" type="text" placeholder="Limite Mensal" required>
+          <button class="btn" type="submit">Adicionar</button>
+        </form>
+      </article>
+      <article class="card">
+        <h3>Orçamentos do Mês</h3>
+        <p class="muted">Acompanhe seus gastos em relação aos limites definidos</p>
+        <div id="budget-list"></div>
+      </article>
     </section>
   </div>
 
   <script>
-    // ===== Helpers de formatação BR =====
-    const BRL = (n)=> Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    // ===== Utils
+    const BRL = n => Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+    const parseBR = s => { if(!s) return 0; s = String(s).replace(/[R$\s]/g,''); if(s.includes(',')) s = s.replace(/\./g,'').replace(',', '.'); const n = Number(s); return isNaN(n)?0:n }
+    const todayISO = ()=> new Date().toISOString().slice(0,10);
+    const monthKey = iso => { const d=new Date(iso+'T00:00:00'); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}` };
+    const curMonthKey = ()=> monthKey(todayISO());
 
-    // ===== Dados MOCK só para exibir (você pode substituir por fetch no seu app real) =====
-    const state = {
-      month: 'setembro de 2025',
-      transactions: [], // deixe vazio para manter o estado "nenhuma transação"
-      categories: [],   // idem
-      last6Months: ['mai. de 25','jun. de 25','jul. de 25','ago. de 25','set. de 25','out. de 25'],
-      incomeSeries: [0,0,0,0,0,0],
-      expenseSeries: [0,0,0,0,0,0]
-    };
+    // ===== Estado (localStorage)
+    const SKEY = 'lukrato_finance_state_v1';
+    const state = JSON.parse(localStorage.getItem(SKEY)||'{}');
+    state.transactions ||= []; // {id,tipo,valor,categoria,descricao,data}
+    state.budgets ||= [];      // {id,categoria,limite}
+    const save = ()=> localStorage.setItem(SKEY, JSON.stringify(state));
 
-    // KPIs
-    document.getElementById('kpi-income').textContent = BRL(0);
-    document.getElementById('kpi-expense').textContent = BRL(0);
-    document.getElementById('kpi-balance').textContent = BRL(0);
-    document.getElementById('kpi-count').textContent = state.transactions.length;
+    // ===== Navegação Tabs
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.tab-content');
+    tabs.forEach(btn=>btn.addEventListener('click',()=>{
+      tabs.forEach(b=>b.classList.remove('is-active')); btn.classList.add('is-active');
+      sections.forEach(s=>s.hidden=true); document.getElementById(btn.dataset.tab).hidden=false;
+      if(btn.dataset.tab==='dashboard') renderDashboard();
+      if(btn.dataset.tab==='transactions') renderList();
+      if(btn.dataset.tab==='budget') renderBudgets();
+    }));
 
-    // Lista de transações (vazia por padrão para combinar com o Figma)
-    const list = document.getElementById('tx-list');
-    const emptyList = document.getElementById('empty-list');
-    if(state.transactions.length){
-      emptyList.hidden = true; list.hidden = false;
-      state.transactions.slice(0,5).forEach(tx=>{
-        const li = document.createElement('li');
-        li.className = 'tx-item';
-        li.innerHTML = `<div>
-            <strong>${tx.title}</strong><div class="tx-meta">${tx.date} · ${tx.category}</div>
-          </div>
-          <div style="font-weight:700; color:${tx.amount>=0?'var(--green)':'var(--red)'}">${BRL(tx.amount)}</div>`;
-        list.appendChild(li);
+    // ===== Form Adicionar
+    const form = document.getElementById('tx-form');
+    form.elements['data'].value = todayISO();
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const fd = new FormData(form);
+      const valor = parseBR(fd.get('valor'));
+      if(!valor || valor<=0) return Swal.fire({icon:'error',title:'Valor inválido',text:'Informe um valor maior que zero.'});
+      if(!fd.get('categoria')) return Swal.fire({icon:'error',title:'Categoria obrigatória'});
+      if(!fd.get('descricao').trim()) return Swal.fire({icon:'error',title:'Descrição obrigatória'});
+      if(!fd.get('data')) return Swal.fire({icon:'error',title:'Data obrigatória'});
+
+      state.transactions.push({id:crypto.randomUUID(), tipo:fd.get('tipo'), valor, categoria:fd.get('categoria'), descricao:fd.get('descricao').trim(), data:fd.get('data')});
+      save();
+      Swal.fire({icon:'success',title:'Transação adicionada!',showConfirmButton:false,timer:1200});
+      form.reset(); form.elements['data'].value=todayISO(); form.elements['tipo'][0].checked=true;
+      document.querySelector('[data-tab="dashboard"]').click();
+      renderDashboard();
+    });
+
+    // ===== Transações List + filtros + delete
+    document.getElementById('search').addEventListener('input', renderList);
+    document.getElementById('filter-tipo').addEventListener('change', renderList);
+    document.getElementById('filter-cat').addEventListener('change', renderList);
+
+    async function deleteTx(id){
+      const t = await Swal.fire({icon:'warning',title:'Remover transação?',text:'Essa ação não pode ser desfeita.',showCancelButton:true,confirmButtonText:'Remover',cancelButtonText:'Cancelar'});
+      if(!t.isConfirmed) return;
+      state.transactions = state.transactions.filter(x=>x.id!==id);
+      save();
+      renderList(); renderDashboard();
+      Swal.fire({icon:'success',title:'Removida!',timer:900,showConfirmButton:false});
+    }
+
+    function renderList(){
+      const q = document.getElementById('search').value.toLowerCase();
+      const t = document.getElementById('filter-tipo').value;
+      const c = document.getElementById('filter-cat').value;
+      const wrap = document.getElementById('tx-list-full');
+      let data = state.transactions.slice().reverse();
+      if(q) data = data.filter(x=> x.descricao.toLowerCase().includes(q));
+      if(t) data = data.filter(x=> x.tipo===t);
+      if(c) data = data.filter(x=> x.categoria===c);
+      document.getElementById('total-tx').textContent = data.length;
+      const saldo = data.reduce((s,x)=> s + (x.tipo==='receita'? x.valor : -x.valor), 0);
+      document.getElementById('saldo-geral').textContent = BRL(saldo);
+
+      wrap.innerHTML='';
+      data.forEach(x=>{
+        const li = document.createElement('li'); li.className='tx-item';
+        li.innerHTML = `<div class="tx-left"><span class="dot"></span><div><strong>${x.descricao}</strong><div class="tx-meta">${new Date(x.data).toLocaleDateString('pt-BR')} • ${x.categoria}</div></div></div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="amount ${x.tipo==='receita'?'positive':'negative'}">${x.tipo==='receita'?'+':''}${BRL(x.valor)}</span>
+            <span class="badge">${x.tipo==='receita'?'Receita':'Despesa'}</span>
+            <button class="btn-icon" title="Excluir"><i class="fa-regular fa-trash-can"></i></button>
+          </div>`;
+        li.querySelector('.btn-icon').addEventListener('click',()=> deleteTx(x.id));
+        wrap.appendChild(li);
       });
     }
 
-    // ===== Gráfico Pizza (categorias) =====
-    const pieCtx = document.getElementById('chart-pie');
-    const emptyPie = document.getElementById('empty-pie');
-    if(state.categories.length === 0){
-      // nada para mostrar: escondemos canvas e exibimos vazio
-      pieCtx.style.display = 'none';
-      emptyPie.hidden = false;
-    } else {
-      new Chart(pieCtx,{type:'doughnut',data:{
-        labels: state.categories.map(c=>c.name),
-        datasets:[{data: state.categories.map(c=>c.value)}]
-      }, options:{plugins:{legend:{position:'bottom'}}, cutout:'60%'}});
+    // ===== Dashboard (KPIs + charts + recentes)
+    let pie, line;
+    function renderDashboard(){
+      const month = curMonthKey();
+      const monthTx = state.transactions.filter(x=> monthKey(x.data)===month );
+      const inc = monthTx.filter(x=>x.tipo==='receita').reduce((s,x)=>s+x.valor,0);
+      const exp = monthTx.filter(x=>x.tipo==='despesa').reduce((s,x)=>s+x.valor,0);
+      const bal = inc-exp;
+      document.getElementById('kpi-income').textContent = BRL(inc);
+      document.getElementById('kpi-expense').textContent = BRL(exp);
+      document.getElementById('kpi-balance').textContent = BRL(bal);
+      document.getElementById('kpi-count').textContent = monthTx.length;
+      const monthLabel = new Date().toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+      document.getElementById('inc-sub').textContent = `Total de receitas em ${monthLabel}`;
+      document.getElementById('exp-sub').textContent = `Total de gastos em ${monthLabel}`;
+      document.getElementById('bal-sub').textContent = bal>=0? 'Você está no azul!' : 'Atenção: saldo negativo.';
+
+      // Recentes
+      const ul = document.getElementById('tx-list');
+      ul.innerHTML='';
+      monthTx.slice(-5).reverse().forEach(x=>{
+        const li=document.createElement('li'); li.className='tx-item';
+        li.innerHTML = `<div class="tx-left"><span class="dot"></span><div><strong>${x.descricao}</strong><div class="tx-meta">${new Date(x.data).toLocaleDateString('pt-BR')} • ${x.categoria}</div></div></div>
+        <div class="amount ${x.tipo==='receita'?'positive':'negative'}">${x.tipo==='receita'?'+':''}${BRL(x.valor)}</div>`;
+        ul.appendChild(li);
+      });
+
+      // Pie categorias (despesas)
+      const byCat = {};
+      monthTx.filter(x=>x.tipo==='despesa').forEach(x=>{ byCat[x.categoria]=(byCat[x.categoria]||0)+x.valor });
+      const labels = Object.keys(byCat), values = Object.values(byCat);
+      const elPie = document.getElementById('chart-pie'); const emptyPie = document.getElementById('empty-pie');
+      if(pie) pie.destroy();
+      if(values.length===0){ elPie.style.display='none'; emptyPie.style.display='block'; }
+      else { elPie.style.display='block'; emptyPie.style.display='none'; pie = new Chart(elPie,{type:'doughnut',data:{labels,datasets:[{data:values}]},options:{plugins:{legend:{position:'bottom'}},cutout:'60%'}}); }
+
+      // Linha últimos 6 meses
+      const labels6=[]; const inc6=[]; const exp6=[]; const base=new Date();
+      for(let i=5;i>=0;i--){ const d=new Date(base.getFullYear(), base.getMonth()-i, 1); const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; labels6.push(d.toLocaleDateString('pt-BR',{month:'short',year:'2-digit'})); const mm=state.transactions.filter(x=>monthKey(x.data)===key); inc6.push(mm.filter(x=>x.tipo==='receita').reduce((s,x)=>s+x.valor,0)); exp6.push(mm.filter(x=>x.tipo==='despesa').reduce((s,x)=>s+x.valor,0)); }
+      const elLine = document.getElementById('chart-line'); if(line) line.destroy(); line = new Chart(elLine,{type:'line',data:{labels:labels6,datasets:[{label:'Gastos',data:exp6,tension:.35},{label:'Receitas',data:inc6,tension:.35}]},options:{responsive:true,scales:{y:{beginAtZero:true}}}});
     }
 
-    // ===== Gráfico Linhas (receitas vs gastos) =====
-    const lineCtx = document.getElementById('chart-line');
-    new Chart(lineCtx, {type:'line', data:{
-      labels: state.last6Months,
-      datasets:[
-        { label:'Gastos', data: state.expenseSeries, tension:.35 },
-        { label:'Receitas', data: state.incomeSeries, tension:.35 }
-      ]
-    }, options:{
-      responsive:true,
-      scales:{ y:{ beginAtZero:true } }
-    }});
+    // ===== Orçamentos =====
+    const bForm = document.getElementById('budget-form');
+    bForm.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const cat = document.getElementById('budget-cat').value; const lim = parseBR(document.getElementById('budget-limit').value);
+      if(!cat) return Swal.fire({icon:'error',title:'Escolha a categoria'});
+      if(!lim || lim<=0) return Swal.fire({icon:'error',title:'Limite inválido'});
+      // se já existir, substitui
+      const idx = state.budgets.findIndex(b=>b.categoria===cat);
+      if(idx>=0) state.budgets[idx].limite = lim; else state.budgets.push({id:crypto.randomUUID(), categoria:cat, limite:lim});
+      save(); renderBudgets(); Swal.fire({icon:'success',title:'Orçamento salvo',timer:900,showConfirmButton:false});
+      bForm.reset();
+    });
+
+    async function deleteBudget(id){
+      const t = await Swal.fire({icon:'warning',title:'Excluir orçamento?',showCancelButton:true,confirmButtonText:'Excluir',cancelButtonText:'Cancelar'});
+      if(!t.isConfirmed) return; state.budgets = state.budgets.filter(b=>b.id!==id); save(); renderBudgets();
+    }
+
+    function renderBudgets(){
+      const wrap = document.getElementById('budget-list'); wrap.innerHTML='';
+      const month = curMonthKey();
+      state.budgets.forEach(b=>{
+        const spent = state.transactions.filter(x=> x.tipo==='despesa' && x.categoria===b.categoria && monthKey(x.data)===month).reduce((s,x)=>s+x.valor,0);
+        const pct = Math.min(100, Math.round((spent/b.limite)*100 || 0));
+        const row = document.createElement('div'); row.className='card'; row.style.padding='12px 14px'; row.style.marginBottom='10px';
+        row.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px; margin-bottom:8px"><div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:#22d3ee"></span><strong>${b.categoria}</strong></div><button class="btn-icon" title="Excluir"><i class='fa-regular fa-trash-can'></i></button></div>
+          <div class="muted">Gasto: ${BRL(spent)} de ${BRL(b.limite)}</div>
+          <div class="progress" style="margin-top:8px"><div class="bar" style="width:${pct}%"></div></div>`;
+        row.querySelector('.btn-icon').addEventListener('click',()=> deleteBudget(b.id));
+        wrap.appendChild(row);
+      });
+    }
+
+    // ===== Inicialização
+    renderDashboard();
   </script>
 </body>
 </html>
